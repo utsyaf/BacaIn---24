@@ -1,0 +1,54 @@
+import PyPDF2
+from gtts import gTTS
+import os
+
+import PyPDF2
+
+# Membuka file PDF
+pdf_file_path = "Sample.pdf"
+pdf_file = open(pdf_file_path, 'rb')
+
+# Membuat objek PDFReader
+pdf_reader = PyPDF2.PdfReader(pdf_file)
+
+# Inisialisasi variabel untuk menyimpan teks dari PDF
+pdf_text = ""
+
+# Mengambil teks dari setiap halaman PDF
+for page_number in range(len(pdf_reader.pages)):
+    page = pdf_reader.pages[page_number]
+    pdf_text += page.extract_text()
+
+# Menutup file PDF
+pdf_file.close()
+
+# Menampilkan teks dari PDF
+print(pdf_text)
+
+
+from sumy.parsers.plaintext import PlaintextParser
+from sumy.nlp.tokenizers import Tokenizer
+from sumy.summarizers.lsa import LsaSummarizer
+
+# Membuat parser teks dari teks PDF
+parser = PlaintextParser.from_string(pdf_text, Tokenizer("english"))
+
+# Membuat objek ringkasan
+summarizer = LsaSummarizer()
+
+# Menghasilkan ringkasan dari teks PDF
+summary = summarizer(parser.document, 10)  # Angka 3 adalah jumlah kalimat yang diinginkan dalam ringkasan
+
+# Menampilkan ringkasan
+for sentence in summary:
+    print(sentence)
+
+def text_to_speech(text):
+    tts = gTTS(text=text, lang='id')
+    tts.save("Sample_Summary.mp3")
+    os.system("start Sample_Summary.mp3")
+    
+summary_text = ""
+for sentence in summary:
+    summary_text += str(sentence) + " "
+text_to_speech(summary_text)
