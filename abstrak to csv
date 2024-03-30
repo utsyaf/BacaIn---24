@@ -1,0 +1,58 @@
+import os
+import PyPDF2
+import pandas as pd
+import nltk
+from nltk.tokenize import sent_tokenize, word_tokenize
+from tabulate import tabulate
+
+nltk.download('punkt')
+
+def extract_abstract(pdf_file):
+    abstract = ""
+    with open(pdf_file, 'rb') as file:
+        pdf_reader = PyPDF2.PdfReader(file)
+        num_pages = len(pdf_reader.pages)
+        for page_num in range(num_pages):
+            page = pdf_reader.pages[page_num]
+            text = page.extract_text().lower()
+            index = text.find("abstrak")
+            if index != -1: 
+                abstract = text[index + len("abstrak"):]
+                keyword_index = abstract.find("kata kunci")
+                if keyword_index != -1:
+                    abstract = abstract[:keyword_index]
+                break
+    return abstract
+
+def generate_summary(text):
+    sentences = sent_tokenize(text)
+    summary = ' '.join(sentences[:3])
+    words = word_tokenize(summary)
+    if len(words) > 25:
+        summary = ' '.join(words[:25])
+    
+    return summary
+
+def main():
+    pdf_directory = "C:\JGU\#SEM6\Journal"
+    jurnal_csv_file = "Jurnal.csv"
+    
+    abstract_data = []
+    for filename in os.listdir(pdf_directory):
+        pdf_path = os.path.join(pdf_directory, filename)
+        abstract = extract_abstract(pdf_path)
+        summary = generate_summary(abstract)
+        abstract_data.append({'File': filename, 'Abstract': abstract, 'Summary': summary})
+    
+    df = pd.DataFrame(abstract_data, columns=['File', 'Abstract', 'Summary'])
+    df.to_csv(summary_csv_file, index=False)
+    print("Abstracts and Summaries Extracted and Saved to", jurnal_csv_file)
+
+if __name__ == "__main__":
+    main()
+
+jurnal_csv_file = "Jurnal.csv"
+df = pd.read_csv(jurnal_csv_file)
+df
+
+print(tabulate(df, headers='keys', tablefmt='simple'))
